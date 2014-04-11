@@ -3,9 +3,9 @@ from __future__ import division
 import re
 import textwrap
 
-import wifi.subprocess_compat as subprocess
-from wifi.utils import db2dbm
-from wifi.exceptions import InterfaceError
+import subprocess_compat as subprocess
+from utils import db2dbm
+from exceptions import InterfaceError
 
 
 class Cell(object):
@@ -20,13 +20,15 @@ class Cell(object):
         return 'Cell(ssid={ssid})'.format(**vars(self))
 
     @classmethod
-    def all(cls, interface):
+    def all(cls, interface=None):
         """
         Returns a list of all cells extracted from the output of iwlist.
         """
+        command = ['/sbin/iwlist', 'scan']
+        if interface is not None:
+            command[1:1] = [interface]
         try:
-            iwlist_scan = subprocess.check_output(['/sbin/iwlist', interface, 'scan'],
-                                                  stderr=subprocess.STDOUT)
+            iwlist_scan = subprocess.check_output(command, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
             raise InterfaceError(e.output.strip())
         else:

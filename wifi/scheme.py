@@ -1,10 +1,10 @@
 import re
 import itertools
 
-import wifi.subprocess_compat as subprocess
-from pbkdf2 import PBKDF2
-from wifi.utils import ensure_file_exists
-from wifi.exceptions import ConnectionError
+import subprocess_compat as subprocess
+# from pbkdf2 import PBKDF2
+from utils import ensure_file_exists
+from exceptions import ConnectionError
 
 
 def configuration(cell, passkey=None):
@@ -60,17 +60,18 @@ class Scheme(object):
             'interfaces': interfaces,
         })
 
-    def __init__(self, interface, name, options=None):
+    def __init__(self, interface, name, inet="dhcp", options={}):
         self.interface = interface
         self.name = name
-        self.options = options or {}
+        self.inet = inet
+        self.options = options
 
     def __str__(self):
         """
         Returns the representation of a scheme that you would need
         in the /etc/network/interfaces file.
         """
-        iface = "iface {interface}-{name} inet dhcp".format(**vars(self))
+        iface = "iface {interface}-{name} inet {inet}".format(**vars(self))
         options = ''.join("\n    {k} {v}".format(k=k, v=v) for k, v in self.options.items())
         return iface + options + '\n'
 
@@ -123,14 +124,14 @@ class Scheme(object):
         """
         Deletes the configuration from the :attr:`interfaces` file.
         """
-        iface = "iface %s-%s inet dhcp" % (self.interface, self.name)
+        iface = "iface %s-%s inet" % (self.interface, self.name)
         content = ''
         with open(self.interfaces, 'r') as f:
             skip = False
             for line in f:
                 if not line.strip():
                     skip = False
-                elif line.strip() == iface:
+                elif line.strip().find(iface) == 0:
                     skip = True
                 if not skip:
                     content += line
@@ -163,8 +164,7 @@ class Scheme(object):
         if matches:
             return Connection(scheme=self, ip_address=matches.group('ip_address'))
         else:
-            raise ConnectionError("Failed to connect to %r" % self)
-
+            raise ConnectionError("Failed to connect to %r with %s" % (self, output))
 
 class Connection(object):
     """
