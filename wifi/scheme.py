@@ -116,7 +116,19 @@ class Scheme(object):
         """
         assert not self.find(self.interface, self.name), "This scheme already exists"
 
-        with open(self.interfaces, 'a') as f:
+        lines = []
+        with open(self.interfaces, 'r') as f:
+            previous = False
+            for l in f.readlines():
+                if l.strip():
+                    lines.append(l)
+                    previous = False
+                else:
+                    if not previous:
+                        lines.append("\n")
+                    previous = True
+        with open(self.interfaces, 'w') as f:
+            f.write("".join(lines))
             f.write('\n')
             f.write(str(self))
 
