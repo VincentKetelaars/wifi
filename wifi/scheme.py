@@ -6,7 +6,6 @@ import subprocess_compat as subprocess
 from utils import ensure_file_exists
 from exceptions import ConnectionError
 
-
 def configuration(cell, passkey=None):
     """
     Returns a dictionary of configuration options for cell
@@ -164,12 +163,21 @@ class Scheme(object):
         """
         Connects to the network as configured in this scheme.
         """
-
-        subprocess.check_output(['/sbin/ifdown', self.interface], stderr=subprocess.STDOUT)
-        ifup_output = subprocess.check_output(['/sbin/ifup'] + self.as_args(), stderr=subprocess.STDOUT)
-        ifup_output = ifup_output.decode('utf-8')
-
-        return self.parse_ifup_output(ifup_output)
+        def set_iwconfig(parameter, value):
+            # parameter starts with 'wireless-'
+            return subprocess.check_output(['/sbin/iwconfig', self.interface, parameter.replace("wireless-", ""), str(value)], stderr=subprocess.STDOUT)
+        
+        subprocess.call(['/usr/bin/service', 'network-manager', 'stop'], stderr=subprocess.STDOUT)
+#             subprocess.check_output(['/sbin/ifdown', self.interface], stderr=subprocess.STDOUT)
+#             ifup_output = subprocess.check_output(['/sbin/ifup'] + self.as_args(), stderr=subprocess.STDOUT)
+#             ifup_output = ifup_output.decode('utf-8')
+#     
+#             return self.parse_ifup_output(ifup_output)
+        for o in ["wireless-mode", "wireless-essid", "wireless-key", "wireless-channel"]:
+            if o in self.options.keys():
+                set_iwconfig(o, self.options.get(o))
+        subprocess.check_output(['/sbin/ifconfig', self.interface, self.options.get("address"), 'netmask', self.options.get("netmask")], stderr=subprocess.STDOUT)
+        return Connection(scheme=self, ip_address=self.options.get("address"))
 
     def parse_ifup_output(self, output):
         matches = bound_ip_re.search(output)
@@ -185,7 +193,9 @@ class Connection(object):
     def __init__(self, scheme, ip_address):
         self.scheme = scheme
         self.ip_address = ip_address
-
+        
+    def __str__(self):
+        return "%s %s %s" % (self.scheme.interface, self.scheme.name, self.ip_address)
 
 # TODO: support other interfaces
 scheme_re = re.compile(r'iface\s+(?P<interface>wlan\d?)(?:-(?P<name>\w+))?')

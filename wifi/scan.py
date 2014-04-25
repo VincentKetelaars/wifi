@@ -55,7 +55,7 @@ class Cell(object):
 
 
 cells_re = re.compile(r'Cell \d+ - ')
-quality_re_dict = {'dBm': re.compile(r'Quality=(\d+/\d+).*Signal level=(-\d+) dBm'),
+quality_re_dict = {'dBm': re.compile(r'Quality=(\d+/\d+).*Signal level=(-?\d+) dBm'),
                    'relative': re.compile(r'Quality=(\d+/\d+).*Signal level=(\d+/\d+)')}
 frequency_re = re.compile(r'([\d\.]+ .Hz).*Channel\s+(\d+).*')
 
@@ -145,7 +145,7 @@ def normalize(cell_block):
 
     # It seems that encryption types other than WEP need to specify their
     # existence.
-    if cell.encrypted and not hasattr(cell, 'encryption_type'):
+    if vars(cell).get("encrypted", False) and not hasattr(cell, 'encryption_type'):
         cell.encryption_type = 'wep'
 
     return cell
