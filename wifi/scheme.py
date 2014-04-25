@@ -167,7 +167,10 @@ class Scheme(object):
             # parameter starts with 'wireless-'
             return subprocess.check_output(['/sbin/iwconfig', self.interface, parameter.replace("wireless-", ""), str(value)], stderr=subprocess.STDOUT)
         
-        subprocess.call(['/usr/bin/service', 'network-manager', 'stop'], stderr=subprocess.STDOUT)
+        try:
+            subprocess.call(['/usr/bin/service', 'network-manager', 'stop'], stderr=subprocess.STDOUT)
+        except:
+            pass
 #             subprocess.check_output(['/sbin/ifdown', self.interface], stderr=subprocess.STDOUT)
 #             ifup_output = subprocess.check_output(['/sbin/ifup'] + self.as_args(), stderr=subprocess.STDOUT)
 #             ifup_output = ifup_output.decode('utf-8')
