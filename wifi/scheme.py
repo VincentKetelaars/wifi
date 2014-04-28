@@ -176,7 +176,12 @@ class Scheme(object):
 #             ifup_output = ifup_output.decode('utf-8')
 #     
 #             return self.parse_ifup_output(ifup_output)
-        for o in ["wireless-mode", "wireless-essid", "wireless-key", "wireless-channel"]:
+
+        try:
+            subprocess.check_output(['/sbin/ip', 'link', 'set', self.interface, 'down'], stderr=subprocess.STDOUT)
+        except:
+            print "Could not set " + self.interface + "down"
+        for o in ["wireless-mode", "wireless-essid", "wireless-key"]:
             if o in self.options.keys():
                 set_iwconfig(o, self.options.get(o))
         subprocess.check_output(['/sbin/ifconfig', self.interface, self.options.get("address"), 'netmask', self.options.get("netmask")], stderr=subprocess.STDOUT)
