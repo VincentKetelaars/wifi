@@ -97,7 +97,16 @@ def normalize(cell_block):
 
     while lines:
         line = lines.pop(0)
-
+        
+        if line.startswith('Address:'):
+            mac_address = re.compile("[0-9A-F:]{17}")
+            match_result = mac_address.search(line)
+            if match_result is not None:
+                cell.mac = match_result.group(0)
+        
+        if line.startswith('Mode:'):
+            cell.mode = split_on_colon(line)[1].strip()
+            
         if line.startswith('Quality'):
             for re_name, quality_re in quality_re_dict.items():
                 match_result = quality_re.search(line)
