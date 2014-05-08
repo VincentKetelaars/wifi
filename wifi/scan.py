@@ -7,6 +7,8 @@ import subprocess_compat as subprocess
 from utils import db2dbm
 from exceptions import InterfaceError
 
+from logging import getLogger
+logger = getLogger(__name__)
 
 class Cell(object):
     """

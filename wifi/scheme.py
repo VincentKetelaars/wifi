@@ -5,6 +5,8 @@ import subprocess_compat as subprocess
 # from pbkdf2 import PBKDF2
 from utils import ensure_file_exists
 from exceptions import ConnectionError
+from logging import getLogger
+logger = getLogger(__name__)
 
 def configuration(cell, passkey=None):
     """
@@ -165,12 +167,13 @@ class Scheme(object):
         """
         def set_iwconfig(parameter, value):
             # parameter starts with 'wireless-'
-            return subprocess.check_output(['/sbin/iwconfig', self.interface, parameter.replace("wireless-", ""), str(value)], stderr=subprocess.STDOUT)
+            return subprocess.check_output(['/sbin/iwconfig', self.interface, parameter.replace("wireless-", ""), 
+                                            str(value)], stderr=subprocess.STDOUT)
         
         try:
             subprocess.call(['/usr/bin/service', 'network-manager', 'stop'], stderr=subprocess.STDOUT)
         except:
-            pass
+            logger.debug("Could not stop NetworkManager")
 #             subprocess.check_output(['/sbin/ifdown', self.interface], stderr=subprocess.STDOUT)
 #             ifup_output = subprocess.check_output(['/sbin/ifup'] + self.as_args(), stderr=subprocess.STDOUT)
 #             ifup_output = ifup_output.decode('utf-8')
@@ -180,11 +183,12 @@ class Scheme(object):
         try:
             subprocess.check_output(['/sbin/ip', 'link', 'set', self.interface, 'down'], stderr=subprocess.STDOUT)
         except:
-            print "Could not set " + self.interface + "down"
-        for o in ["wireless-mode", "wireless-essid", "wireless-key"]:
+            logger.debug("Could not set %s down", self.interface)
+        for o in ["wireless-mode", "wireless-channel", "wireless-essid", "wireless-key"]:
             if o in self.options.keys():
                 set_iwconfig(o, self.options.get(o))
-        subprocess.check_output(['/sbin/ifconfig', self.interface, self.options.get("address"), 'netmask', self.options.get("netmask")], stderr=subprocess.STDOUT)
+        subprocess.check_output(['/sbin/ifconfig', self.interface, self.options.get("address"), 
+                                 'netmask', self.options.get("netmask")], stderr=subprocess.STDOUT)
         return Connection(scheme=self, ip_address=self.options.get("address"))
 
     def parse_ifup_output(self, output):
